@@ -4,6 +4,8 @@ import collections
 import json
 import datetime
 import time
+import base64
+from io import BytesIO
 
 from dotenv import load_dotenv
 import urllib3
@@ -55,6 +57,23 @@ def send_alert(alert_str):
     http.request('POST', WEBHOOK_URL, body=json.dumps(data).encode('utf-8'), headers=WEBHOOK_HEADERS)
 
 
+def upload_image(image):
+    with BytesIO() as buffer:
+        image.save(buffer)
+        image_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    url = "https://api.imgur.com/3/image"
+    headers = {
+        "Authorization": "Client-ID {}".format(os.environ['IMGUR_CLIENT_ID']),
+    }
+    r = http.request('POST', url, fields={'image': image_base64}, headers=headers)
+    if r.status == 200:
+        response = json.loads(r.data)
+        return response['link']
+    else:
+        return None
+
+
 def main():
     default_model_dir = '../all_models'
     default_model = 'mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite'
@@ -101,7 +120,8 @@ def main():
                     first_hit = current_time
                     print("first hit registered at", current_time)
                 elif (current_time - first_hit < double_confirm_max) and (current_time - first_hit >= double_confirm_min):
-                    send_alert("person detected at {}".format(datetime.datetime.now().isoformat()))
+                    image_link = upload_image(pil_im)
+                    send_alert("person detected at {}. \nlink:\n{}".format(datetime.datetime.now().isoformat(), image_link))
                     print("alerted at", current_time)
                     stop_until = current_time + refractory_period
         if cv2.waitKey(1) & 0xFF == ord('q'):
