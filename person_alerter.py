@@ -100,9 +100,10 @@ def main():
             if current_time > stop_until:
                 if (current_time - first_hit) > double_confirm_max:
                     first_hit = current_time
+                    print("first hit registered at", current_time)
                 elif (current_time - first_hit < double_confirm_max) and (current_time - first_hit >= double_confirm_min):
                     send_alert("person detected at {}".format(datetime.datetime.now().isoformat()))
-                    print("alerted.")
+                    print("alerted at", current_time)
                     stop_until = current_time + refractory_period
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
