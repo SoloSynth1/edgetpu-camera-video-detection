@@ -105,7 +105,9 @@ def main():
         common.set_input(interpreter, pil_im)
         interpreter.invoke()
         objs = get_output(interpreter, score_threshold=args.threshold, top_k=args.top_k)
-        print(filter(lambda x: x.score > 0.5, objs))
+        high_c_objs = list(filter(lambda x: x.score > 0.5, objs))
+        if high_c_objs:
+            print(high_c_objs)
         # cv2_im = append_objs_to_img(cv2_im, objs, labels)
         #
         # cv2.imshow('frame', cv2_im)
