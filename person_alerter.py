@@ -66,7 +66,6 @@ def main():
     parser.add_argument('--camera_idx', type=int, help='Index of which video source to use. ', default = 0)
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='classifier score threshold')
-    parser.add_argument('--')
     args = parser.parse_args()
 
     print('Loading {}.'.format(args.model))
