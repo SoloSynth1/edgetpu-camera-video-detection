@@ -82,9 +82,11 @@ def main():
                         default=os.path.join(default_model_dir, default_model))
     parser.add_argument('--top_k', type=int, default=10,
                         help='number of categories with highest score to display')
-    parser.add_argument('--camera_idx', type=int, help='Index of which video source to use. ', default = 0)
+    parser.add_argument('--camera_idx', type=int, help='Index of which video source to use. ', default=0)
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='classifier score threshold')
+    parser.add_argument('--video_width', type=int, help='Width resolution of the Video Capture', default=640)
+    parser.add_argument('--video_height', type=int, help='Width resolution of the Video Capture', default=480)
     args = parser.parse_args()
 
     print('Loading {}.'.format(args.model))
@@ -93,6 +95,9 @@ def main():
 
     cap = cv2.VideoCapture(args.camera_idx)
 
+    # set VideoCapture resolution
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, args.video_width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, args.video_height)
 
     first_hit = 0
     stop_until = 0
