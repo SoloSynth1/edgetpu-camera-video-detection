@@ -6,6 +6,7 @@ import datetime
 import time
 import base64
 from io import BytesIO
+import array
 
 from dotenv import load_dotenv
 import urllib3
@@ -80,13 +81,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help='.tflite model path',
                         default=os.path.join(default_model_dir, default_model))
-    parser.add_argument('--top_k', type=int, default=10,
+    parser.add_argument('--top_k', type=int, default=5,
                         help='number of categories with highest score to display')
     parser.add_argument('--camera_idx', type=int, help='Index of which video source to use. ', default=0)
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='classifier score threshold')
-    parser.add_argument('--video_width', type=int, help='Width resolution of the Video Capture', default=640)
-    parser.add_argument('--video_height', type=int, help='Width resolution of the Video Capture', default=480)
+    parser.add_argument('--video_width', type=int, help='Width resolution of the Video Capture', default=960)
+    parser.add_argument('--video_height', type=int, help='Width resolution of the Video Capture', default=720)
+    parser.add_argument('--confirmations', type=int,
+                        help='Frames detected with one or more person(s) needed before sending out an alert', default=30)
+    parser.add_argument('--time_period', type=int, help='Maximum time for confirmation check (in seconds)', default=10)
+    parser.add_argument('--alert_cooldown', type=int, help='Cooldown time between alerts (in seconds)', default=120)
     args = parser.parse_args()
 
     print('Loading {}.'.format(args.model))
@@ -99,11 +104,8 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, args.video_width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, args.video_height)
 
-    first_hit = 0
-    stop_until = 0
-    double_confirm_min = 3
-    double_confirm_max = 10
-    refractory_period = 60
+    cooldown_until = 0
+    confirmations = array.array('d', [0]*args.confirmations)
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -120,15 +122,12 @@ def main():
         persons = list(filter(lambda x: x.id == PERSON_COCO_INDEX, objs))
         if persons:
             current_time = time.time()
-            if current_time > stop_until:
-                if (current_time - first_hit) > double_confirm_max:
-                    first_hit = current_time
-                    print("first hit registered at", current_time)
-                elif (current_time - first_hit < double_confirm_max) and (current_time - first_hit >= double_confirm_min):
-                    print("alerted at", current_time)
-                    image_link = upload_image(pil_im)
-                    send_alert("person detected at {}. \nlink:\n{}".format(datetime.datetime.now().isoformat(), image_link))
-                    stop_until = current_time + refractory_period
+            confirmations.append(current_time)
+            if confirmations[-1] - confirmations.pop(0) <= args.time_period and confirmations[-1] >= cooldown_until:
+                print("alerted at", current_time)
+                image_link = upload_image(pil_im)
+                send_alert("person detected at {}. \n{}".format(datetime.datetime.now().isoformat(), image_link))
+                cooldown_until = current_time + args.alert_cooldown
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
