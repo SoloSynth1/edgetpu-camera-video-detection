@@ -86,12 +86,12 @@ def main():
     parser.add_argument('--camera_idx', type=int, help='Index of which video source to use. ', default=0)
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='classifier score threshold')
-    parser.add_argument('--video_width', type=int, help='Width resolution of the Video Capture', default=960)
-    parser.add_argument('--video_height', type=int, help='Width resolution of the Video Capture', default=720)
+    parser.add_argument('--video_width', type=int, help='Width resolution of the Video Capture', default=1920)
+    parser.add_argument('--video_height', type=int, help='Width resolution of the Video Capture', default=1080)
     parser.add_argument('--confirmations', type=int,
                         help='Frames detected with one or more person(s) needed before sending out an alert', default=30)
     parser.add_argument('--time_period', type=int, help='Maximum time for confirmation check (in seconds)', default=10)
-    parser.add_argument('--alert_cooldown', type=int, help='Cooldown time between alerts (in seconds)', default=120)
+    parser.add_argument('--alert_cooldown', type=int, help='Cooldown time between alerts (in seconds)', default=600)
     args = parser.parse_args()
 
     print('Loading {}.'.format(args.model))
